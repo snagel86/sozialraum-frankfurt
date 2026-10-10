@@ -1521,7 +1521,8 @@ APP.profileOwnership = function (p) {
   const parts = APP.OWNERSHIP.filter((e) => e.id !== "OWN_PUBLIC" || p.OWN_PUBLIC != null).map((e) => ({ ...e, value: p[e.id] ?? 0 }));
   // the coverage only where it matters (under 90 %)
   const coverage = p.COV_OWN != null && Math.round(p.COV_OWN) < 90 ? ` Nur ${APP.format(p.COV_OWN, 0)} % der Wohnungen zugeordnet.` : "";
-  let h = `<h3>Eigentum <span class="as-of">${APP.escape(APP.meta.OWN_COOP.as_of)}</span></h3><p class="note">Wohnungen nach Eigentümer (geschätzt).${coverage}</p><div class="stack">`;
+  // only the year of the estimate; how 2011 is used says the ⓘ of each layer
+  let h = `<h3>Eigentum <span class="as-of">${APP.escape(APP.meta.OWN_COOP.as_of.split(" · ")[0])}</span></h3><p class="note">Wohnungen nach Eigentümer (geschätzt).${coverage}</p><div class="stack">`;
   h += parts.map((t) => `<span style="width:${t.value}%;background:${t.color}" title="${APP.escape(t.title)}: ${APP.format(t.value, 1)} %"></span>`).join("") + "</div>";
   h += `<table class="table"><tr><th></th><th>Gebiet</th><th>Stadt</th></tr>`;
   h += parts.map((t) => `<tr><td><i style="background:${t.color}"></i>${APP.escape(t.title)}</td><td>${APP.format(t.value, 1)} %</td>` +
