@@ -6,8 +6,7 @@ Sozialraum Frankfurt
 Karte zu Eigentum, Lage, Belastung, Boden, Schutz und Wahl in Frankfurt am Main.
 Alles steckt in dieser einen Datei. Nur der graue Hintergrund (basemap.de) braucht Internet.
 
-Nicht öffentlich – nur für interne Zwecke.
-Bitte nicht veröffentlichen, nicht verlinken und nicht weitergeben.
+Nur für interne Zwecke.
 
 VORBEHALTE
 - Die Karte beschreibt Gebiete, nicht Menschen.
@@ -25,7 +24,7 @@ Erstellt am 10.10.2026
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Sozialraum Frankfurt – nicht öffentlich</title>
+<title>Sozialraum Frankfurt</title>
 <style>/* required styles */
 
 .leaflet-pane,
@@ -860,7 +859,7 @@ h3 .as-of { font: 400 12px "Atkinson Hyperlegible Next", Arial, sans-serif; text
 <body>
 <header id="header"><h1>Sozialraum Frankfurt</h1>
   <nav id="views" aria-label="Ansicht"><button type="button" data-view="map" class="active" aria-pressed="true">Karte</button><button type="button" data-view="history" aria-pressed="false">2011–2022</button></nav>
-  <span class="internal">Nicht öffentlich – nur für interne Zwecke</span>
+  <span class="internal">Nur für interne Zwecke</span>
 </header>
 <main>
   <aside id="sidebar">
@@ -875,7 +874,6 @@ h3 .as-of { font: 400 12px "Atkinson Hyperlegible Next", Arial, sans-serif; text
     <section id="tab-candidates" class="tab"></section>
     <section id="tab-area" class="tab"><p class="note">Klick auf ein Gebiet zeigt hier sein Profil.</p></section>
     <section id="tab-help" class="tab">
-      <p><strong>Bitte nicht veröffentlichen, nicht verlinken und nicht weitergeben.</strong></p>
       <h2>So funktioniert die Karte</h2>
       <p><strong>Schichten:</strong> Wähle eine Kennzahl. Dunkler heißt mehr. Das ⓘ nennt Quelle und Haken.</p>
       <p><strong>Ebene:</strong> 114 Bezirke oder 45 Stadtteile.</p>
@@ -1955,8 +1953,8 @@ APP.sizesChart = function (h) {
   const company = h.groups.find((g) => g.id === "company");
   const growth = company.values["2022"] - company.values["2011"];
   const rows = h.sizes.map((s) => ({ label: s.label, values: s.company, tips: Object.fromEntries(["2011", "2022"].map((y) => {
-    let tip = `${y}: ${APP.format(s.company[y], 0)} Wohnungen von Unternehmen in Häusern mit ${s.long}. `
-      + `Das ist ${APP.format(APP.share(s.company[y], s.all[y]), 1)} % aller Wohnungen dort.`;
+    let tip = `${company.title} ${y}: ${APP.format(s.company[y], 0)} Wohnungen in Häusern mit ${s.long}. `
+      + `Das sind ${APP.format(APP.share(s.company[y], s.all[y]), 1)} % aller Wohnungen dort.`;
     if (s.size === "13_plus" && y === "2022") {
       tip += " " + h.charts.sizes.tip_large.replace("{large}", APP.format(s.company["2022"] - s.company["2011"], 0))
         .replace("{total}", APP.format(growth, 0));
@@ -1969,9 +1967,10 @@ APP.sizesChart = function (h) {
 
 // Chart 4: company buildings by year of construction
 APP.decadesChart = function (h) {
+  const company = h.groups.find((g) => g.id === "company");
   const rows = h.decades.map((d) => ({ label: d.label, values: d.values, tips: {
-    2011: `2011: ${APP.format(d.values["2011"], 0)} Häuser von Unternehmen, Baujahr ${d.label}`,
-    2022: `2022: ${APP.format(d.values["2022"], 0)} Häuser von Unternehmen, Baujahr ${d.label} (2011: ${APP.format(d.values["2011"], 0)})` } }));
+    2011: `${company.title} 2011: ${APP.format(d.values["2011"], 0)} Häuser, Baujahr ${d.label}`,
+    2022: `${company.title} 2022: ${APP.format(d.values["2022"], 0)} Häuser, Baujahr ${d.label} (2011: ${APP.format(d.values["2011"], 0)})` } }));
   return APP.pairBars(rows, "decades", "Häuser privater Unternehmen nach Baujahr: " + h.decades.map((d) =>
     `${d.label} ${APP.format(d.values["2011"], 0)} (2011) und ${APP.format(d.values["2022"], 0)} (2022)`).join("; "));
 };
