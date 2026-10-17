@@ -790,7 +790,8 @@ h3 .as-of { font: 400 12px var(--font-text); text-transform: none; color: var(--
 /* the line of a written sum: under operator and number, not under the text */
 .info dd .sum .rule { grid-column: 1 / 3; height: 0; border-top: 1.5px solid #000; margin: 1px 0 2px; }
 .info dd .sum .sub { font-weight: 700; }
-.info dd .sum .result-box { display: inline-block; padding: 0 6px 1px; background: var(--accent); box-shadow: 3px 3px 0 #000; font-size: 24px; }
+/* the result stands out by its size and the line above it, without a box */
+.info dd .sum .result { font-size: 24px; }
 .note { font-size: 13px; color: var(--grey); }
 .warning { background: #fff3cd; padding: 6px 8px; font-size: 13px; }
 .legend-title { display: block; }
@@ -1326,7 +1327,7 @@ APP.calcExampleHtml = function (m) {
   const ex = m.calc_example, label = `Rechnung am Beispiel ${ex.area}`;
   const rows = ex.rows.map((r, i) => {
     const number = (r.estimate ? "~" : "") + APP.format(r.number, r.decimals) + (r.unit ? " " + r.unit : "");
-    const shown = i === ex.rows.length - 1 ? `<span class="result-box">${APP.escape(number)}</span>` : APP.escape(number);
+    const shown = i === ex.rows.length - 1 ? `<span class="result">${APP.escape(number)}</span>` : APP.escape(number);
     return (r.total ? `<span class="rule"></span><span></span>` : "") + `<span class="op">${APP.escape(r.op)}</span><span class="n">${shown}</span>` +
       `<span class="what${r.total && r.text ? " sub" : ""}">${APP.escape(r.text)}</span>`;
   }).join("");
