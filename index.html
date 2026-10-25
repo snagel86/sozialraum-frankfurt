@@ -2690,87 +2690,60 @@ APP.newConstructionChart = function (n, W) {
 // stands at population ÷ s.k on the axis of the dwellings (K = population ÷ dwellings in s.anchor): equal height is an
 // equal share of the value of s.anchor, so both dots of s.anchor coincide. The base changes in s.break_year (Zensus
 // 2022): no segment joins the year before and that year; a dotted segment leads to a hollow dot at the value of that
-// year on the old base (s.old_base). Wide: one slot per year between the dwelling ticks (red, a margin of 66 units on
-// the left) and the population ticks (black, 70 units on the right). Narrow (below APP.CONSTRUCTION_WIDE px): one row
-// per year, drawn in px; the axes run across, the dwellings at the top, the population at the bottom; a gap of 22 px
-// between the rows at the break holds the note.
+// year on the old base (s.old_base). One slot per year between the dwelling ticks (red, on the left) and the
+// population ticks (black, on the right). Wide: a drawing 760 units wide that scales. Narrow (below
+// APP.CONSTRUCTION_WIDE px): the same drawing in px at the room, lower and with smaller margins. No numbers stand at
+// the dots, only the first year, the last year and the years divisible by 5 name their year, the note stands left of
+// the break, and a tap on the slot of a year shows its tooltip.
 APP.STOCK_SERIES = [["stock", "dwellings"], ["population", "population"]];
 APP.stockChart = function (s, W) {
   const narrow = W < APP.CONSTRUCTION_WIDE, years = s.years, a = s.axis, r = s.axis_right, old = s.old_base;
   const cut = years.findIndex((y) => y.year === s.break_year), height = (key, v) => (key === "population" ? v / s.k : v);
   const ticks = a.tick_texts.map((text, k) => [a.min + k * a.tick, text]), rticks = r.ticks.map((v, k) => [v, r.tick_texts[k]]);
   const label = [s.title + ".", ...years.map((y) => y.tip), old.stock_tip, old.population_tip].join(" ");
-  let svg, pos, hit;
-  if (!narrow) {
-    const left = 66, right = 70, top = 44, base = 300, step = (W - left - right) / years.length, sc = (base - top) / (a.max - a.min);
-    const cx = (i) => left + i * step + step / 2, cy = (v) => base - (v - a.min) * sc, edge = W - right;
-    pos = (i, key, v = years[i][key]) => [cx(i), cy(height(key, v))];
-    hit = (x, y, radius) => APP.svgElement("circle", { cx: x, cy: y, r: radius, class: "hit" });
-    svg = APP.svgElement("svg", { viewBox: `0 0 ${W} ${base + 30}`, class: "stock", role: "img", "aria-label": label });
-    for (const [v, text] of ticks) {
-      svg.append(APP.svgElement("line", { x1: left - 4, x2: edge + 4, y1: cy(v), y2: cy(v), class: "grid" }),
-        APP.svgElement("text", { x: left - 8, y: cy(v) + 4, "text-anchor": "end", class: "axis dwellings" }, text));
-    }
-    // the population ticks sit at their own height on a black axis line; they have no grid of their own
-    for (const [v, text] of rticks) {
-      const y = cy(height("population", v));
-      svg.append(APP.svgElement("line", { x1: edge, x2: edge + 5, y1: y, y2: y, class: "tick" }),
-        APP.svgElement("text", { x: edge + 9, y: y + 4, class: "axis population" }, text));
-    }
-    const bx = left + cut * step;
-    svg.append(APP.svgElement("line", { x1: edge, x2: edge, y1: top - 6, y2: base, class: "axis-line" }),
-      APP.svgElement("text", { x: 0, y: top - 22, class: "title dwellings" }, a.label),
-      APP.svgElement("text", { x: W, y: top - 22, "text-anchor": "end", class: "title population" }, r.label),
-      APP.svgElement("line", { x1: bx, x2: bx, y1: top - 6, y2: base, class: "break" }),
-      APP.svgElement("text", { x: bx + 5, y: base - 8, class: "note" }, s.break_note));
-    APP.stockLines(svg, s, cut, pos);
-    years.forEach((y, i) => {
-      const last = y.year === s.highlight, g = APP.svgElement("g", { class: last ? "last" : "", "data-tip": y.tip });
-      for (const [key, cls] of APP.STOCK_SERIES) {
-        const [x, yy] = pos(i, key);
-        g.append(hit(x, yy, 12), APP.svgElement("circle", { cx: x, cy: yy, r: 4.5, class: "dot " + cls }));
-        // the dwellings above their dot, the population below it; the last year left of its dots, clear of the line
-        if (y.label) g.append(APP.svgElement("text", { x: last ? x - 10 : x, y: key === "stock" ? yy - 11 : yy + 22,
-          "text-anchor": last ? "end" : "middle", class: "label " + cls }, y[key + "_text"]));
-      }
-      g.append(APP.svgElement("text", { x: cx(i), y: base + 20, "text-anchor": "middle", class: "year" }, y.year));
-      svg.append(g);
-    });
-    APP.stockOldDots(svg, s, cut, pos, (x, y) => hit(x, y, 8));
-    svg.append(APP.svgElement("line", { x1: left - 4, x2: edge, y1: base, y2: base, stroke: "#000", "stroke-width": 2 }));
-    return svg;
+  const left = narrow ? 62 : 66, right = narrow ? 58 : 70, top = 44, base = narrow ? 264 : 300;
+  const step = (W - left - right) / years.length, sc = (base - top) / (a.max - a.min);
+  const cx = (i) => left + i * step + step / 2, cy = (v) => base - (v - a.min) * sc, edge = W - right;
+  const pos = (i, key, v = years[i][key]) => [cx(i), cy(height(key, v))];
+  const hit = (x, y, radius) => APP.svgElement("circle", { cx: x, cy: y, r: radius, class: "hit" });
+  const svg = APP.svgElement("svg", { viewBox: `0 0 ${W} ${base + 30}`, ...(narrow ? { width: W } : {}), class: "stock", role: "img",
+    "aria-label": label });
+  for (const [v, text] of ticks) {
+    svg.append(APP.svgElement("line", { x1: left - 4, x2: edge + 4, y1: cy(v), y2: cy(v), class: "grid" }),
+      APP.svgElement("text", { x: left - 8, y: cy(v) + 4, "text-anchor": "end", class: "axis dwellings" }, text));
   }
-  const row = 30, gap = 22, top = 42, side = 44, room = W - side - 30, sc = room / (a.max - a.min);
-  const rowTop = (i) => top + i * row + (i >= cut ? gap : 0), cx = (v) => side + (v - a.min) * sc, bottom = rowTop(years.length);
-  pos = (i, key, v = years[i][key]) => [cx(height(key, v)), rowTop(i) + row / 2];
-  hit = (x, y) => APP.svgElement("circle", { cx: x, cy: y, r: 8, class: "hit" });
-  svg = APP.svgElement("svg", { viewBox: `0 0 ${W} ${bottom + 48}`, width: W, class: "stock", role: "img", "aria-label": label });
-  // dwellings at the top with a grid line per tick, population at the bottom on a black axis line; labels at every
-  // second tick (four each), so they keep their room on a phone
-  ticks.forEach(([v, text], k) => {
-    svg.append(APP.svgElement("line", { x1: cx(v), x2: cx(v), y1: top - 4, y2: bottom, class: "grid" }));
-    if (k % 2) svg.append(APP.svgElement("text", { x: cx(v), y: top - 8, "text-anchor": "middle", class: "axis dwellings" }, text));
-  });
-  rticks.forEach(([v, text], k) => {
-    const x = cx(height("population", v));
-    svg.append(APP.svgElement("line", { x1: x, x2: x, y1: bottom + 4, y2: bottom + 9, class: "tick" }));
-    if (k % 2) svg.append(APP.svgElement("text", { x, y: bottom + 22, "text-anchor": "middle", class: "axis population" }, text));
-  });
-  const by = rowTop(cut - 1) + row + 4;
-  svg.append(APP.svgElement("text", { x: 0, y: 13, class: "title dwellings" }, a.label),
-    APP.svgElement("line", { x1: side - 4, x2: W, y1: bottom + 4, y2: bottom + 4, class: "axis-line" }),
-    APP.svgElement("text", { x: 0, y: bottom + 42, class: "title population" }, r.label),
-    APP.svgElement("line", { x1: side - 4, x2: W, y1: by, y2: by, class: "break" }),
-    APP.svgElement("text", { x: side, y: by + 14, class: "note" }, s.break_note));
+  // the population ticks sit at their own height on a black axis line; they have no grid of their own
+  for (const [v, text] of rticks) {
+    const y = cy(height("population", v));
+    svg.append(APP.svgElement("line", { x1: edge, x2: edge + 5, y1: y, y2: y, class: "tick" }),
+      APP.svgElement("text", { x: edge + 9, y: y + 4, class: "axis population" }, text));
+  }
+  const bx = left + cut * step;
+  svg.append(APP.svgElement("line", { x1: edge, x2: edge, y1: top - 6, y2: base, class: "axis-line" }),
+    APP.svgElement("text", { x: 0, y: top - 22, class: "title dwellings" }, a.label),
+    APP.svgElement("text", { x: W, y: top - 22, "text-anchor": "end", class: "title population" }, r.label),
+    APP.svgElement("line", { x1: bx, x2: bx, y1: top - 6, y2: base, class: "break" }),
+    APP.svgElement("text", { x: narrow ? bx - 5 : bx + 5, y: base - 8, ...(narrow ? { "text-anchor": "end" } : {}), class: "note" },
+      s.break_note));
   APP.stockLines(svg, s, cut, pos);
   years.forEach((y, i) => {
-    const g = APP.svgElement("g", { class: y.year === s.highlight ? "last" : "", "data-tip": y.tip });
-    g.append(APP.svgElement("rect", { x: 0, y: rowTop(i), width: W, height: row, class: "hit" }),
-      APP.svgElement("text", { x: 0, y: rowTop(i) + row / 2 + 5, class: "year" }, y.year),
-      ...APP.STOCK_SERIES.map(([key, cls]) => { const [x, yy] = pos(i, key); return APP.svgElement("circle", { cx: x, cy: yy, r: 4.5, class: "dot " + cls }); }));
+    const last = y.year === s.highlight, g = APP.svgElement("g", { class: last ? "last" : "", "data-tip": y.tip });
+    if (narrow) g.append(APP.svgElement("rect", { x: left + i * step, y: top - 6, width: step, height: base - top + 30, class: "hit" }));
+    for (const [key, cls] of APP.STOCK_SERIES) {
+      const [x, yy] = pos(i, key);
+      if (!narrow) g.append(hit(x, yy, 12));
+      g.append(APP.svgElement("circle", { cx: x, cy: yy, r: 4.5, class: "dot " + cls }));
+      // the dwellings above their dot, the population below it; the last year left of its dots, clear of the line
+      if (y.label && !narrow) g.append(APP.svgElement("text", { x: last ? x - 10 : x, y: key === "stock" ? yy - 11 : yy + 22,
+        "text-anchor": last ? "end" : "middle", class: "label " + cls }, y[key + "_text"]));
+    }
+    if (!narrow || i === 0 || last || y.year % 5 === 0) {
+      g.append(APP.svgElement("text", { x: cx(i), y: base + 20, "text-anchor": "middle", class: "year" }, y.year));
+    }
     svg.append(g);
   });
-  APP.stockOldDots(svg, s, cut, pos, hit);
+  APP.stockOldDots(svg, s, cut, pos, (x, y) => hit(x, y, 8));
+  svg.append(APP.svgElement("line", { x1: left - 4, x2: edge, y1: base, y2: base, stroke: "#000", "stroke-width": 2 }));
   return svg;
 };
 
